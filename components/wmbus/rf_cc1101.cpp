@@ -111,6 +111,19 @@ namespace wmbus {
               data_in.block  = 'A';
               rxLoop.pByteIndex += 3;
             }
+            // Mode S
+            else if (*currentByte == WMBUS_MODE_S_PREAMBLE) {
+              currentByte++;
+              // Mode S uses Manchester encoding, length is in the second byte
+              rxLoop.lengthField = *currentByte;
+              rxLoop.length = 2 + packetSize(rxLoop.lengthField);
+              data_in.mode = 'S';
+              data_in.block = 'A';
+              data_in.lengthField = rxLoop.lengthField;
+              // don't include S "preamble"
+              *(rxLoop.pByteIndex) = rxLoop.lengthField;
+              rxLoop.pByteIndex += 1;
+            }
             // Unknown mode, reinit loop
             else {
               rxLoop.state = INIT_RX;

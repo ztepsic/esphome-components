@@ -114,7 +114,8 @@ namespace wmbus {
             }
             else {
               supported_link_mode = ( ((mbus_data.mode == 'T') && (used_drv_info.linkModes().has(LinkMode::T1))) ||
-                                      ((mbus_data.mode == 'C') && (used_drv_info.linkModes().has(LinkMode::C1))) );
+                                      ((mbus_data.mode == 'C') && (used_drv_info.linkModes().has(LinkMode::C1))) ||
+                                      ((mbus_data.mode == 'S') && (used_drv_info.linkModes().has(LinkMode::S1))) );
             }
 
             if (used_driver.empty()) {

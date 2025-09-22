@@ -19,6 +19,7 @@ namespace wmbus {
   bool mBusDecode(WMbusData &t_in, WMbusFrame &t_frame);
   bool mBusDecodeFormatA(const WMbusData &t_in, WMbusFrame &t_frame);
   bool mBusDecodeFormatB(const WMbusData &t_in, WMbusFrame &t_frame);
+  bool mBusDecodeModeS(const WMbusData &t_in, WMbusFrame &t_frame);
 
 }
 }

@@ -50,6 +50,7 @@
 #define WMBUS_MODE_C_PREAMBLE      0x54
 #define WMBUS_BLOCK_A_PREAMBLE     0xCD
 #define WMBUS_BLOCK_B_PREAMBLE     0x3D
+#define WMBUS_MODE_S_PREAMBLE      0x76
 
 enum RxLoopState : uint8_t {
   INIT_RX       = 0,
