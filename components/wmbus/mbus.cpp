@@ -57,6 +57,13 @@ namespace wmbus {
       }
 
     }
+    else if (t_in.mode == 'S') {
+      ESP_LOGD(TAG, "Received S1 A frame");
+      // Mode S uses Manchester encoding, decode it first
+      if (mBusDecodeModeS(t_in, t_frame)) {
+        retVal = true;
+      }
+    }
     if (retVal) {
       std::string telegram = format_hex_pretty(t_frame.frame);
       telegram.erase(std::remove(telegram.begin(), telegram.end(), '.'), telegram.end());
@@ -187,6 +194,47 @@ namespace wmbus {
       t_frame.frame[0] -= 2;
     }
     return true;
+  }
+
+  bool mBusDecodeModeS(const WMbusData &t_in, WMbusFrame &t_frame) {
+    // Mode S uses Manchester encoding - decode from Manchester to binary
+    std::vector<unsigned char> rawFrame(t_in.data, t_in.data + t_in.length);
+    std::string telegram = format_hex_pretty(rawFrame);
+    telegram.erase(std::remove(telegram.begin(), telegram.end(), '.'), telegram.end());
+    ESP_LOGV(TAG, "Frame: %s [RAW Manchester]", telegram.c_str());
+    
+    // Manchester decode: each bit is represented by 2 bits (01 = 0, 10 = 1)
+    std::vector<unsigned char> decoded_data;
+    for (size_t i = 0; i < t_in.length; i++) {
+      unsigned char byte = t_in.data[i];
+      unsigned char decoded_byte = 0;
+      
+      // Decode 4 Manchester bits to 2 regular bits
+      for (int bit = 0; bit < 4; bit++) {
+        unsigned char manchester_pair = (byte >> (6 - bit * 2)) & 0x03;
+        if (manchester_pair == 0x01) {  // 01 = 0
+          // decoded_byte already has 0
+        } else if (manchester_pair == 0x02) {  // 10 = 1
+          decoded_byte |= (1 << (3 - bit));
+        } else {
+          ESP_LOGW(TAG, "Invalid Manchester encoding at byte %zu, bit %d: %02X", i, bit, manchester_pair);
+          return false;
+        }
+      }
+      decoded_data.push_back(decoded_byte);
+    }
+    
+    // Create a temporary WMbusData structure with decoded data
+    WMbusData decoded_t_in = t_in;
+    decoded_t_in.length = decoded_data.size();
+    std::copy(decoded_data.begin(), decoded_data.end(), decoded_t_in.data);
+    
+    std::string decoded_telegram = format_hex_pretty(decoded_data);
+    decoded_telegram.erase(std::remove(decoded_telegram.begin(), decoded_telegram.end(), '.'), decoded_telegram.end());
+    ESP_LOGV(TAG, "Frame: %s [decoded from Manchester]", decoded_telegram.c_str());
+    
+    // Mode S typically uses Format A structure after Manchester decoding
+    return mBusDecodeFormatA(decoded_t_in, t_frame);
   }
 
 }
