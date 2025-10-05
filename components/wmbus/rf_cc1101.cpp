@@ -20,10 +20,23 @@ namespace esphome
 
       ELECHOUSE_cc1101.Init();
 
-      for (uint8_t i = 0; i < TMODE_RF_SETTINGS_LEN; i++)
+      // Choose RF settings based on frequency
+      const uint8_t *settings;
+      if (freq >= 868.9f)
+      { // T-mode/C-mode
+        settings = TMODE_RF_SETTINGS_BYTES;
+        ESP_LOGD(TAG, "Using T-mode/C-mode RF settings (868.950 MHz)");
+      }
+      else
+      { // S-mode
+        settings = SMODE_RF_SETTINGS_BYTES;
+        ESP_LOGD(TAG, "Using S-mode RF settings (868.300 MHz)");
+      }
+
+      for (uint8_t i = 0; i < RF_SETTINGS_LEN; i++)
       {
-        ELECHOUSE_cc1101.SpiWriteReg(TMODE_RF_SETTINGS_BYTES[i << 1],
-                                     TMODE_RF_SETTINGS_BYTES[(i << 1) + 1]);
+        ELECHOUSE_cc1101.SpiWriteReg(settings[i << 1],
+                                     settings[(i << 1) + 1]);
       }
 
       uint32_t freq_reg = uint32_t(freq * 65536 / 26);
